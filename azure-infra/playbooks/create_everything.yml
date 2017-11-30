@@ -1,0 +1,1386 @@
+---
+- hosts: deployer
+  vars:
+    # Ansible variables
+    ansible_ssh_private_key_file: "~/.ssh/management_keys/{{ management_key_name }}"
+    # Tenant variables
+    tenant_resource_grp_name: RG-HPE
+    tenant_resource_grp_location: westeurope
+    # Management variables
+    management_storage_acc_name: cldhpemgmt01
+    management_storage_acc_type: Standard_LRS
+    management_network_name: MANAGEMENT-NET01
+    management_subnet_name: MANAGEMENT-SUBNET01
+    management_network_address_lst:
+      - "10.10.0.0/16"
+    management_subnet_address: "10.10.0.0/24"
+    management_key_name: mgmt-key
+    management_key_bits: 4096
+    management_key_type: rsa
+    management_admin_user: mgmtadmin
+    management_authz_keys:  /home/mgmtadmin/.ssh/authorized_keys
+    management_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    # Compute variables
+    compute_storage_acc_name: cldhpecomp01
+    compute_storage_acc_type: Standard_LRS
+    compute_network_name: CMP-NET01
+    compute_subnet_name: CMP-SUBNET01
+    compute_network_address_lst:
+      - "192.168.0.0/16"
+    compute_subnet_address: "192.168.1.0/24"
+    compute_admin_user: cmpadmin
+    compute_authz_keys:  /home/cmpadmin/.ssh/authorized_keys
+    # Container variables
+    container_storage_acc_name: cldhpecont01
+    container_storage_acc_type: Standard_LRS
+    container_network_name: CONT-NET01
+    container_subnet_name: CONT-SUBNET01
+    container_network_address_lst:
+      - "172.150.0.0/16"
+    container_subnet_address: "172.150.0.0/16"
+    container_admin_user: contadmin
+    container_authz_keys: /home/contadmin/.ssh/authorized_keys
+    # GitLab variables
+    gitlab_publisher_name: Canonical
+    gitlab_offer_name: UbuntuServer
+    gitlab_sku_name: 16.04.0-LTS
+    gitlab_version_name: 16.04.201611150
+    gitlab_mgmt_nic_name: NIC-GITLAB-MGMT-01
+    gitlab_mgmt_sec_grp_name: SG-GITLAB-MGMT-01
+    gitlab_pub_ip_name: IP-GITLAB-MGMT
+    gitlab_pub_ip_allocation: Static
+    gitlab_pub_ip_dns: hpe-gitlab-pt
+    gitlab_vm_name: VM-GITLAB-01
+    gitlab_vm_size: Standard_D2s_v3
+    gitlab_vm_os_type: Linux
+    gitlab_vm_ssh_pass_flag: False
+    gitlab_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    gitlab_vm_short_name: hpe-gitlab-pt
+    # AWX variables
+    awx_publisher_name: Canonical
+    awx_offer_name: UbuntuServer
+    awx_sku_name: 16.04.0-LTS
+    awx_version_name: 16.04.201611150
+    awx_mgmt_nic_name: NIC-AWX-MGMT-01
+    awx_mgmt_sec_grp_name: SG-AWX-MGMT-01
+#    awx_comp_nic_name: NIC-AWX-COMP-01
+#    awx_comp_sec_grp_name: SG-AWX-COMP-01
+    awx_pub_ip_name: IP-AWX-MGMT
+    awx_pub_ip_allocation: Static
+    awx_pub_ip_dns: hpe-awx-pt
+    awx_vm_name: VM-AWX-01
+    awx_vm_size: Standard_D2s_v3
+    awx_vm_os_type: Linux
+    awx_vm_ssh_pass_flag: False
+    awx_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    awx_vm_short_name: hpe-awx-pt
+    # Chef variables
+    chef_publisher_name: Canonical
+    chef_offer_name: UbuntuServer
+    chef_sku_name: 16.04.0-LTS
+    chef_version_name: 16.04.201611150
+    chef_mgmt_nic_name: NIC-CHEF-MGMT-01
+    chef_mgmt_sec_grp_name: SG-CHEF-MGMT-01
+#    chef_comp_nic_name: NIC-CHEF-COMP-01
+#    chef_comp_sec_grp_name: SG-CHEF-COMP-01
+    chef_pub_ip_name: IP-CHEF-MGMT
+    chef_pub_ip_allocation: Static
+    chef_pub_ip_dns: hpe-chef-pt
+    chef_vm_name: VM-CHEF-01
+    chef_vm_size: Standard_D2s_v3
+    chef_vm_os_type: Linux
+    chef_vm_ssh_pass_flag: False
+    chef_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    chef_vm_short_name: hpe-chef-pt
+    # Kubernetes Master variables
+    k8sm_publisher_name: Canonical
+    k8sm_offer_name: UbuntuServer
+    k8sm_sku_name: 16.04.0-LTS
+    k8sm_version_name: 16.04.201611150
+    k8sm_cont_nic_name: NIC-K8SM-CONT-01
+    k8sm_cont_sec_grp_name: SG-K8SM-CONT-01
+    k8sm_pub_ip_name: IP-K8SM-CONT
+    k8sm_pub_ip_allocation: Static
+    k8sm_pub_ip_dns: hpe-k8sm-pt
+    k8sm_vm_name: VM-K8SM-01
+    k8sm_vm_size: Standard_D2s_v3
+    k8sm_vm_os_type: Linux
+    k8sm_vm_ssh_pass_flag: False
+    k8sm_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    k8sm_vm_short_name: hpe-k8sm-pt
+    # Kubernetes Worker variables
+    k8sw_publisher_name: Canonical
+    k8sw_offer_name: UbuntuServer
+    k8sw_sku_name: 16.04.0-LTS
+    k8sw_version_name: 16.04.201611150
+    k8sw_cont_nic_name: NIC-K8SW-CONT-01
+    k8sw_cont_sec_grp_name: SG-K8SW-CONT-01
+    k8sw_pub_ip_name: IP-K8SW1-CONT
+    k8sw_pub_ip_allocation: Static
+    k8sw_pub_ip_dns: hpe-k8sw1-pt
+    k8sw_vm_name: VM-K8SW-01
+    k8sw_vm_size: Standard_D2s_v3
+    k8sw_vm_os_type: Linux
+    k8sw_vm_ssh_pass_flag: False
+    k8sw_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    k8sw_vm_short_name: hpe-k8sw1-pt
+  tasks:
+    # Create Infraestructure
+    - name: Create tenat resource group
+      azure_rm_resourcegroup:
+        name: "{{ tenant_resource_grp_name }}"
+        location: "{{ tenant_resource_grp_location }}"
+        tags:
+          type: management
+          delete: never
+
+    - name: Check if the tenant resource group was created
+      azure_rm_resourcegroup:
+        name: "{{ tenant_resource_grp_name }}"
+        location: "{{ tenant_resource_grp_location }}"
+        state: present
+
+    - name: Create MANAGEMENT storage account
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ management_storage_acc_name }}"
+        type: "{{ management_storage_acc_type }}"
+        tags:
+          type: management
+          delete: never
+      ignore_errors: True
+
+    - name: Create COMPUTE storage account
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ compute_storage_acc_name }}"
+        type: "{{ compute_storage_acc_type }}"
+        tags:
+          type: compute
+          delete: never
+
+    - name: Create CONTAINER storage account
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ container_storage_acc_name }}"
+        type: "{{ container_storage_acc_type }}"
+        tags:
+          type: container
+          delete: never
+
+    - name: Check if MANAGEMENT storage account exists
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ management_storage_acc_name }}"
+        state: present
+
+    - name: Check if COMPUTE storage account exists
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ compute_storage_acc_name }}"
+        state: present
+
+    - name: Check if CONTAINER storage account exists
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ container_storage_acc_name }}"
+        state: present
+
+    - name: Create MANAGEMENT network
+      azure_rm_virtualnetwork:
+        name: "{{ management_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefixes_cidr: "{{ management_network_address_lst }}"
+        tags:
+          type: management
+          delete: never
+
+    - name: Create MANAGEMENT subnet
+      azure_rm_subnet:
+        name: "{{ management_subnet_name }}"
+        virtual_network_name: "{{ management_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ management_subnet_address }}"
+        tags:
+          type: management
+          delete: never
+
+    - name: Create COMPUTE network
+      azure_rm_virtualnetwork:
+        name: "{{ compute_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefixes_cidr: "{{ compute_network_address_lst }}"
+        tags:
+          type: compute
+          delete: never
+
+    - name: Create COMPUTE subnet
+      azure_rm_subnet:
+        name: "{{ compute_subnet_name }}"
+        virtual_network_name: "{{ compute_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ compute_subnet_address }}"
+        tags:
+          type: compute
+          delete: never
+
+    - name: Create CONTAINER network
+      azure_rm_virtualnetwork:
+        name: "{{ container_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefixes_cidr: "{{ container_network_address_lst }}"
+        tags:
+          type: container
+          delete: never
+
+    - name: Create CONTAINER subnet
+      azure_rm_subnet:
+        name: "{{ container_subnet_name }}"
+        virtual_network_name: "{{ container_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ container_subnet_address }}"
+        tags:
+          type: container
+          delete: never
+
+    - name: Check if MANAGEMENT network was created
+      azure_rm_virtualnetwork:
+        name: "{{ management_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        state: present
+
+    - name: Check if MANAGEMENT subnet was created
+      azure_rm_subnet:
+        name: "{{ management_subnet_name }}"
+        virtual_network_name: "{{ management_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ management_subnet_address }}"
+        state: present
+
+    - name: Check if COMPUTE network was created
+      azure_rm_virtualnetwork:
+        name: "{{ compute_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        state: present
+
+    - name: Check if COMPUTE subnet was created
+      azure_rm_subnet:
+        name: "{{ compute_subnet_name }}"
+        virtual_network_name: "{{ compute_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ compute_subnet_address }}"
+        state: present
+
+    - name: Check if CONTAINER network was created
+      azure_rm_virtualnetwork:
+        name: "{{ container_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        state: present
+
+    - name: Check if CONTAINER subnet was created
+      azure_rm_subnet:
+        name: "{{ container_subnet_name }}"
+        virtual_network_name: "{{ container_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ container_subnet_address }}"
+        state: present
+
+    - name: Create MANAGEMENT keys directory
+      file:
+        path: ~/.ssh/management_keys/
+        state: directory
+        mode: 0755
+
+    - name: Create MANAGEMENT keys, if they weren't created previously
+      command: "ssh-keygen -q -b {{ management_key_bits }} -t {{ management_key_type }} -N '' -f {{ management_key_name }}"
+      args:
+        chdir: ~/.ssh/management_keys/
+        creates: "{{ management_key_name }}"
+
+    - name: Check if MANAGEMENT private key exists
+      stat:
+        path: "~/.ssh/management_keys/{{ management_key_name }}"
+
+    - name: Check if MANAGEMENT public key exists
+      stat:
+        path: "~/.ssh/management_keys/{{ management_key_name }}.pub"
+
+    - name: Make sure the Public Key has the right permissions
+      file:
+        path: "~/.ssh/management_keys/{{ management_key_name }}.pub"
+        mode: 0600
+        state: file
+
+#    - name: Add MANAGEMENT key to the authorized keys
+#      authorized_key:
+#        user: "{{ ansible_ssh_user }}"
+#        state: present
+#        key: "{{ management_pub_key }}"
+
+    # Create GitLab Virtual Machine
+    - name: Create GitLab security group, for exterior access
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_mgmt_sec_grp_name }}"
+        purge_rules: yes
+        rules:
+          - name: 'AcceptSSHGlobally'
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 100
+            direction: Inbound
+          - name: 'AllowHTTP'
+            protocol: Tcp
+            destination_port_range: 80
+            access: Allow
+            priority: 101
+            direction: Inbound
+          - name: 'AllowHTTPS'
+            protocol: Tcp
+            destination_port_range: 443
+            access: Allow
+            priority: 102
+            direction: Inbound
+
+    - name: Check if GitLab Security Group exists
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_mgmt_sec_grp_name }}"
+        state: present
+
+    - name: Create GitLab Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_pub_ip_name }}"
+        allocation_method: "{{ gitlab_pub_ip_allocation }}"
+        domain_name_label: "{{ gitlab_pub_ip_dns }}"
+      register: state
+
+    - name: Print GitLab Public IP Address
+      debug:
+        var: state
+
+    - name: Create MGMT NIC for GitLab with PubIP and SecGrp
+      azure_rm_networkinterface:
+            name: "{{ gitlab_mgmt_nic_name }}"
+            resource_group: "{{ tenant_resource_grp_name }}"
+            virtual_network_name: "{{ management_network_name }}"
+            subnet_name: "{{ management_subnet_name }}"
+            security_group_name: "{{ gitlab_mgmt_sec_grp_name }}"
+            public_ip_address_name: "{{ gitlab_pub_ip_name }}"
+
+    - name: Check if GitLab MGMT NIC exists
+      azure_rm_networkinterface:
+            resource_group: "{{ tenant_resource_grp_name }}"
+            name: "{{ gitlab_mgmt_nic_name }}"
+            state: present
+
+    - name: Create GitLab VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_vm_name }}"
+        vm_size: "{{ gitlab_vm_size }}"
+        storage_account: "{{ management_storage_acc_name }}"
+        managed_disk_type: "{{ management_storage_acc_type }}"
+        admin_username: "{{ management_admin_user }}"
+        os_type: "{{ gitlab_vm_os_type }}"
+        ssh_password_enabled: "{{ gitlab_vm_ssh_pass_flag }}"
+        ssh_public_keys:
+          - path: "{{ management_authz_keys }}"
+            key_data: "{{ gitlab_vm_pub_key }}"
+        network_interface_names: "{{ gitlab_mgmt_nic_name }} "
+        virtual_network_name: "{{ management_network_name }}"
+        subnet_name: "{{ management_subnet_name }}"
+        short_hostname: "{{ gitlab_vm_short_name }}"
+        image:
+          offer: "{{ gitlab_offer_name }}"
+          publisher: "{{ gitlab_publisher_name }}"
+          sku: "{{ gitlab_sku_name }}"
+          version: "{{ gitlab_version_name }}"
+        tags:
+          type: management
+          resource: vm
+          delete: never
+      register: azure_vm
+
+    - name: Print GitLab VM information
+      debug:
+        var: azure_vm
+
+    - name: Include GitLab VM in host files
+      lineinfile:
+        path: /etc/hosts
+        regexp: '(\s+)gitlab(\s+.*)?$'
+        line: "{{ state.state.ip_address }} gitlab.mgmt.local gitlab"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      become: true
+
+    - name: Check if GitLab VM is running
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_vm_name }}"
+        allocated: yes
+
+#    - name: Add GitLab VM to the known_hosts
+#      known_hosts:
+#        name: gitlab.mgmt.local
+#        key: "gitlab.mgmt.local {{ gitlab_vm_pub_key }}"
+#        state: present
+
+    # Create AWX Virtual Machine
+    - name: Create AWX security group, for exterior access
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_mgmt_sec_grp_name }}"
+        purge_rules: yes
+        rules:
+          - name: 'AcceptSSHGlobally'
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 100
+            direction: Inbound
+          - name: 'AllowHTTP'
+            protocol: Tcp
+            destination_port_range: 80
+            access: Allow
+            priority: 101
+            direction: Inbound
+          - name: 'AllowHTTPS'
+            protocol: Tcp
+            destination_port_range: 443
+            access: Allow
+            priority: 102
+            direction: Inbound
+
+    - name: Check if AWX MGMT Security Group exists
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_mgmt_sec_grp_name }}"
+        state: present
+
+    - name: Create AWX Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_pub_ip_name }}"
+        allocation_method: "{{ awx_pub_ip_allocation }}"
+        domain_name_label: "{{ awx_pub_ip_dns }}"
+      register: state
+
+    - name: Print AWX Public IP address
+      debug:
+        var: state
+
+    - name: Create MGMT NIC for AWX with PubIP and SecGrp
+      azure_rm_networkinterface:
+        name: "{{ awx_mgmt_nic_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        virtual_network_name: "{{ management_network_name }}"
+        subnet_name: "{{ management_subnet_name }}"
+        security_group_name: "{{ awx_mgmt_sec_grp_name }}"
+        public_ip_address_name: "{{ awx_pub_ip_name }}"
+
+    - name: Check if AWX MGMT NIC exists
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_mgmt_nic_name }}"
+        state: present
+#
+#    Because Microsoft can't make azure modules that support two NICs, the
+#    configs for it are all commented out. When they allow you to set one NIC as
+#    primary, the code can be uncommented.
+#
+#    - name: Create AWX security group, for vm access
+#      azure_rm_securitygroup:
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        name: "{{ awx_comp_sec_grp_name }}"
+#        purge_rules: yes
+#        rules:
+#          - name: 'AllowSSH'
+#            protocol: Tcp
+#            destination_port_range: 22
+#            access: Allow
+#            priority: 100
+#            direction: Outbound
+#          - name: 'AllowWinRM'
+#            protocol: Tcp
+#            destination_port_range: 5985
+#            access: Allow
+#            priority: 101
+#            direction: Outbound
+#          - name: 'AllowRDP'
+#            protocol: Tcp
+#            destination_port_range: 3389
+#            access: Allow
+#            priority: 102
+#            direction: Outbound
+
+#    - name: Check if AWX COMP Security Group exists
+#      azure_rm_securitygroup:
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        name: "{{ awx_comp_sec_grp_name }}"
+#        state: present
+
+#    - name: Create COMP NIC for AWX with SecGrp and without PubIP
+#      azure_rm_networkinterface:
+#        name: "{{ awx_comp_nic_name }}"
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        virtual_network_name: "{{ compute_network_name }}"
+#        subnet_name: "{{ compute_subnet_name }}"
+#        security_group_name: "{{ awx_comp_sec_grp_name }}"
+#        public_ip: no
+
+#    - name: Check if AWX COMP NIC exists
+#      azure_rm_networkinterface:
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        name: "{{ awx_comp_nic_name }}"
+#        state: present
+
+    - name: Create AWX VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_vm_name }}"
+        vm_size: "{{ awx_vm_size }}"
+        storage_account: "{{ management_storage_acc_name }}"
+        managed_disk_type: "{{ management_storage_acc_type }}"
+        admin_username: "{{ management_admin_user }}"
+        os_type: "{{ awx_vm_os_type }}"
+        ssh_password_enabled: "{{ awx_vm_ssh_pass_flag }}"
+        ssh_public_keys:
+          - path: "{{ management_authz_keys }}"
+            key_data: "{{ awx_vm_pub_key }}"
+        network_interface_names:
+          - "{{ awx_mgmt_nic_name }}"
+#          - "{{ awx_comp_nic_name }}"
+        short_hostname: "{{ awx_vm_short_name }}"
+        image:
+          offer: "{{ awx_offer_name }}"
+          publisher: "{{ awx_publisher_name }}"
+          sku: "{{ awx_sku_name }}"
+          version: "{{ awx_version_name }}"
+        tags:
+          type: management
+          resource: vm
+          delete: never
+      register: azure_vm
+
+    - name: Print AWX VM information
+      debug:
+        var: azure_vm
+
+    - name: Include AWX VM in host files
+      lineinfile:
+        path: /etc/hosts
+        regexp: '(\s+)awx(\s+.*)?$'
+        line: "{{ state.state.ip_address }} awx.mgmt.local awx"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      become: true
+
+    - name: Check if AWX VM is running
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_vm_name }}"
+        allocated: yes
+
+#    - name: Add AWX VM to the known_hosts
+#      known_hosts:
+#        name: awx.mgmt.local
+#        key: "awx.mgmt.local {{ awx_vm_pub_key }}"
+#        state: present
+
+    # Create Chef Virtual Machine
+    - name: Create Chef security group, for exterior access
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_mgmt_sec_grp_name }}"
+        purge_rules: yes
+        rules:
+          - name: 'AcceptSSHGlobally'
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 100
+            direction: Inbound
+          - name: 'AllowHTTP'
+            protocol: Tcp
+            destination_port_range: 80
+            access: Allow
+            priority: 101
+            direction: Inbound
+          - name: 'AllowHTTPS'
+            protocol: Tcp
+            destination_port_range: 443
+            access: Allow
+            priority: 102
+            direction: Inbound
+
+    - name: Check if Chef MGMT Security Group exists
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_mgmt_sec_grp_name }}"
+        state: present
+
+    - name: Create Chef Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_pub_ip_name }}"
+        allocation_method: "{{ chef_pub_ip_allocation }}"
+        domain_name_label: "{{ chef_pub_ip_dns }}"
+      register: state
+
+    - name: Print Chef Public IP address
+      debug:
+        var: state
+
+    - name: Create MGMT NIC for Chef with PubIP and SecGrp
+      azure_rm_networkinterface:
+        name: "{{ chef_mgmt_nic_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        virtual_network_name: "{{ management_network_name }}"
+        subnet_name: "{{ management_subnet_name }}"
+        security_group_name: "{{ chef_mgmt_sec_grp_name }}"
+        public_ip_address_name: "{{ chef_pub_ip_name }}"
+
+    - name: Check if Chef MGMT NIC exists
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_mgmt_nic_name }}"
+        state: present
+#
+#    Because Microsoft can't make azure modules that support two NICs, the
+#    configs for it are all commented out. When they allow you to set one NIC as
+#    primary, the code can be uncommented.
+#
+#    - name: Create Chef security group, for vm access
+#      azure_rm_securitygroup:
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        name: "{{ chef_comp_sec_grp_name }}"
+#        purge_rules: yes
+#        rules:
+#          - name: 'AllowSSH'
+#            protocol: Tcp
+#            destination_port_range: 22
+#            access: Allow
+#            priority: 100
+#            direction: Outbound
+#          - name: 'AllowWinRM'
+#            protocol: Tcp
+#            destination_port_range: 5985
+#            access: Allow
+#            priority: 101
+#            direction: Outbound
+#          - name: 'AllowRDP'
+#            protocol: Tcp
+#            destination_port_range: 3389
+#            access: Allow
+#            priority: 102
+#            direction: Outbound
+
+#    - name: Check if Chef COMP Security Group exists
+#      azure_rm_securitygroup:
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        name: "{{ chef_comp_sec_grp_name }}"
+#        state: present
+
+#    - name: Create COMP NIC for Chef with SecGrp and without PubIP
+#      azure_rm_networkinterface:
+#        name: "{{ chef_comp_nic_name }}"
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        virtual_network_name: "{{ compute_network_name }}"
+#        subnet_name: "{{ compute_subnet_name }}"
+#        security_group_name: "{{ chef_comp_sec_grp_name }}"
+#        public_ip: no
+
+#    - name: Check if Chef COMP NIC exists
+#      azure_rm_networkinterface:
+#        resource_group: "{{ tenant_resource_grp_name }}"
+#        name: "{{ chef_comp_nic_name }}"
+#        state: present
+
+    - name: Create Chef VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_vm_name }}"
+        vm_size: "{{ chef_vm_size }}"
+        storage_account: "{{ management_storage_acc_name }}"
+        managed_disk_type: "{{ management_storage_acc_type }}"
+        admin_username: "{{ management_admin_user }}"
+        os_type: "{{ chef_vm_os_type }}"
+        ssh_password_enabled: "{{ chef_vm_ssh_pass_flag }}"
+        ssh_public_keys:
+          - path: "{{ management_authz_keys }}"
+            key_data: "{{ chef_vm_pub_key }}"
+        network_interface_names:
+          - "{{ chef_mgmt_nic_name }}"
+#          - "{{ chef_comp_nic_name }}"
+        short_hostname: "{{ chef_vm_short_name }}"
+        image:
+          offer: "{{ chef_offer_name }}"
+          publisher: "{{ chef_publisher_name }}"
+          sku: "{{ chef_sku_name }}"
+          version: "{{ chef_version_name }}"
+        tags:
+          type: management
+          resource: vm
+          delete: never
+      register: azure_vm
+
+    - name: Print Chef VM information
+      debug:
+        var: azure_vm
+
+    - name: Include Chef VM in host files
+      lineinfile:
+        path: /etc/hosts
+        regexp: '(\s+)chef(\s+.*)?$'
+        line: "{{ state.state.ip_address }} chef.mgmt.local chef"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      become: true
+
+    - name: Check if Chef VM is running
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_vm_name }}"
+        allocated: yes
+
+#    - name: Add Chef VM to the known_hosts
+#      known_hosts:
+#        name: chef.mgmt.local
+#        key: "chef.mgmt.local {{ chef_vm_pub_key }}"
+#        state: present
+
+    # Kubernetes Master VM
+    - name: Create K8s Master security group, for exterior access
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_cont_sec_grp_name }}"
+        purge_rules: yes
+        rules:
+          - name: 'AcceptSSHGlobally'
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 100
+            direction: Inbound
+          - name: 'AllowHTTP'
+            protocol: Tcp
+            destination_port_range: 80
+            access: Allow
+            priority: 101
+            direction: Inbound
+          - name: 'AllowHTTPS'
+            protocol: Tcp
+            destination_port_range: 443
+            access: Allow
+            priority: 102
+            direction: Inbound
+
+    - name: Check if K8s Master CONTAINER Security Group exists
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_cont_sec_grp_name }}"
+        state: present
+
+    - name: Create K8s Master Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_pub_ip_name }}"
+        allocation_method: "{{ k8sm_pub_ip_allocation }}"
+        domain_name_label: "{{ k8sm_pub_ip_dns }}"
+      register: state
+
+    - name: Print K8s Master Public IP address
+      debug:
+        var: state
+
+    - name: Create CONTAINER NIC for K8s Master with PubIP and SecGrp
+      azure_rm_networkinterface:
+        name: "{{ k8sm_cont_nic_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        virtual_network_name: "{{ container_network_name }}"
+        subnet_name: "{{ container_subnet_name }}"
+        security_group_name: "{{ k8sm_cont_sec_grp_name }}"
+        public_ip_address_name: "{{ k8sm_pub_ip_name }}"
+
+    - name: Check if K8s Master CONTAINER NIC exists
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_cont_nic_name }}"
+        state: present
+
+    - name: Create K8s Master VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_vm_name }}"
+        vm_size: "{{ k8sm_vm_size }}"
+        storage_account: "{{ container_storage_acc_name }}"
+        managed_disk_type: "{{ container_storage_acc_type }}"
+        admin_username: "{{ container_admin_user }}"
+        os_type: "{{ k8sm_vm_os_type }}"
+        ssh_password_enabled: "{{ k8sm_vm_ssh_pass_flag }}"
+        ssh_public_keys:
+          - path: "{{ container_authz_keys }}"
+            key_data: "{{ k8sm_vm_pub_key }}"
+        network_interface_names:
+          - "{{ k8sm_cont_nic_name }}"
+        short_hostname: "{{ k8sm_vm_short_name }}"
+        image:
+          offer: "{{ k8sm_offer_name }}"
+          publisher: "{{ k8sm_publisher_name }}"
+          sku: "{{ k8sm_sku_name }}"
+          version: "{{ k8sm_version_name }}"
+        tags:
+          type: container
+          resource: vm
+          delete: never
+      register: azure_vm
+
+    - name: Print K8s Master VM information
+      debug:
+        var: azure_vm
+
+    - name: Include K8s Master VM in host files
+      lineinfile:
+        path: /etc/hosts
+        regexp: '(\s+)k8sm(\s+.*)?$'
+        line: "{{ state.state.ip_address }} k8sm.container.local k8sm"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      become: true
+
+    - name: Check if K8s Master VM is running
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_vm_name }}"
+        allocated: yes
+
+    # Kubernetes PODs VMs
+    - name: Create K8s Worker security group, for exterior access
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_cont_sec_grp_name }}"
+        purge_rules: yes
+        rules:
+#          - name: 'AllowAllTraficLocally'
+#            protocol: "*"
+#            destination_port_range: "*"
+#            source_address_prefix: "{{ container_subnet_address }}"
+#            access: Allow
+#            priority: 100
+#            direction: Inbound
+          - name: 'AllowSSHTraficGlobally'
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 101
+            direction: Inbound
+#          - name: 'DenyAllTraficGlobally'
+#            protocol: "*"
+#            destination_port_range: "*"
+#            source_address_prefix: "*"
+#            access: Deny
+#            priority: 102
+#            direction: Inbound
+
+    - name: Check if K8s Worker CONTAINER Security Group exists
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_cont_sec_grp_name }}"
+        state: present
+
+    - name: Create K8s Worker Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_pub_ip_name }}"
+        allocation_method: "{{ k8sw_pub_ip_allocation }}"
+        domain_name_label: "{{ k8sw_pub_ip_dns }}"
+      register: state
+
+    - name: Print K8s Worker Public IP address
+      debug:
+        var: state
+
+    - name: Create CONTAINER NIC for K8s Worker with SecGrp and PubIP
+      azure_rm_networkinterface:
+        name: "{{ k8sw_cont_nic_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        virtual_network_name: "{{ container_network_name }}"
+        subnet_name: "{{ container_subnet_name }}"
+        security_group_name: "{{ k8sw_cont_sec_grp_name }}"
+        public_ip_address_name: "{{ k8sw_pub_ip_name }}"
+
+    - name: Check if K8s Master CONTAINER NIC exists
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_cont_nic_name }}"
+        state: present
+
+    - name: Create K8s Worker VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_vm_name }}"
+        vm_size: "{{ k8sw_vm_size }}"
+        storage_account: "{{ container_storage_acc_name }}"
+        managed_disk_type: "{{ container_storage_acc_type }}"
+        admin_username: "{{ container_admin_user }}"
+        os_type: "{{ k8sw_vm_os_type }}"
+        ssh_password_enabled: "{{ k8sw_vm_ssh_pass_flag }}"
+        ssh_public_keys:
+          - path: "{{ container_authz_keys }}"
+            key_data: "{{ k8sw_vm_pub_key }}"
+        network_interface_names:
+          - "{{ k8sw_cont_nic_name }}"
+        short_hostname: "{{ k8sw_vm_short_name }}"
+        image:
+          offer: "{{ k8sw_offer_name }}"
+          publisher: "{{ k8sw_publisher_name }}"
+          sku: "{{ k8sw_sku_name }}"
+          version: "{{ k8sw_version_name }}"
+        tags:
+          type: container
+          resource: vm
+          delete: never
+      register: azure_vm
+
+    - name: Print K8s Worker VM information
+      debug:
+        var: azure_vm
+
+    - name: Include K8s Worker VM in host files
+      lineinfile:
+        path: /etc/hosts
+        regexp: '(\s+)k8sw1(\s+.*)?$'
+        line: "{{ state.state.ip_address }} k8sw1.container.local k8sw1"
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      become: true
+
+    - name: Check if K8s Worker VM is running
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_vm_name }}"
+        allocated: yes
+
+# GitLab Installation
+- hosts: gitlab
+  vars:
+    ansible_ssh_private_key_file: "~/.ssh/management_keys/{{ management_key_name }}"
+    management_key_name: mgmt-key
+    gitlab_external_url: http://hpe-gitlab-pt.westeurope.cloudapp.azure.com
+  environment:
+    external_url: "{{ gitlab_external_url }}"
+  tags:
+    - gitlab
+  tasks:
+    - name: Test connection the GitLab machine
+      ping:
+
+    - name: Install the dependencies for GitLab
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - curl
+        - openssh-server
+        - ca-certificates
+        - postfix
+      become: yes
+
+    - name: Get GitLab package repository info
+      get_url:
+        url: https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh
+        dest: /tmp/gitlab_script.deb.sh
+        mode: 0764
+
+    - name: Install GitLab package repository
+      shell: ./gitlab_script.deb.sh
+      args:
+        chdir: /tmp
+        executable: /bin/bash
+      become: yes
+
+    - name: Update repositories cache
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Install GitLab
+      apt:
+        name: gitlab-ee
+        state: present
+      become: yes
+
+    - name: Change the external url on GitLab
+      lineinfile:
+        path: /etc/gitlab/gitlab.rb
+        regexp: '^external_url'
+        line: "external_url '{{ gitlab_external_url }}'"
+      become: yes
+
+    - name: Reconfigure and start GitLab
+      shell: gitlab-ctl reconfigure
+      become: yes
+
+- hosts: awx
+  vars:
+    ansible_ssh_private_key_file: "~/.ssh/management_keys/{{ management_key_name }}"
+    management_key_name: mgmt-key
+    management_admin_user: mgmtadmin
+    awx_admin_user: root
+    awx_admin_password: qaz123WSX
+  tags:
+    - awx
+  tasks:
+    - name: Test connection the AWX machine
+      ping:
+
+    - name: Install Ansible dependencies
+      apt:
+        name: software-properties-common
+        state: present
+      become: yes
+
+    - name: Add the Ansible package repository
+      apt_repository:
+        repo: ppa:ansible/ansible
+        state: present
+      become: yes
+
+    - name: Update repositories cache
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Install Ansible
+      apt:
+        name: ansible
+        state: present
+      become: yes
+
+    - name: Install Docker dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - curl
+        - apt-transport-https
+        - ca-certificates
+      become: yes
+
+    - name: Add the Docker package repository key
+      apt_key:
+        url: "https://download.docker.com/linux/ubuntu/gpg"
+        state: present
+      become: yes
+
+    - name: Get the Release name
+      shell: lsb_release -cs
+      register: stdout
+
+    - name: Print Release name
+      debug:
+        var: stdout
+
+    - name: Add the Docker package repository
+      apt_repository:
+        repo:  "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ stdout.stdout }} stable"
+        state: present
+        update_cache: yes
+      become: yes
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+      become: yes
+
+    - name: Install Docker-py dependencies
+      apt:
+        name: python-pip
+        state: present
+      become: yes
+
+    - name: Install Docker-py module
+      shell: pip install docker
+      become: yes
+
+    - name: Install dependencies for AWX
+      apt:
+        name: "{{ item }}"
+      state: present
+      with_items:
+        - make
+        - git
+      become: yes
+
+    - name: Create target dir for AWX repo
+      file:
+        path: /opt/awx
+        state: directory
+        mode: 0755
+        owner: "{{ management_admin_user }}"
+      become: yes
+
+    - name: Clone the AWX repo
+      git:
+        repo: https://github.com/ansible/awx.git
+        dest: /opt/awx
+        force: yes
+
+    - name: Change default AWX admin user
+      lineinfile:
+        path: /opt/awx/installer/inventory
+        regexp: '^# default_admin_user'
+        line: "default_admin_user='{{ awx_admin_user }}'"
+
+    - name: Change default AWX password
+      lineinfile:
+        path: /opt/awx/installer/inventory
+        regexp: '^# default_admin_password'
+        line: "default_admin_password='{{ awx_admin_password }}'"
+
+    - name: Install AWX
+      shell: ansible-playbook -i inventory install.yml
+      args:
+        chdir: /opt/awx/installer/
+      become: yes
+
+- hosts: chef
+  vars:
+    ansible_ssh_private_key_file: "~/.ssh/management_keys/{{ management_key_name }}"
+    management_key_name: mgmt-key
+    management_admin_user: mgmtadmin
+    chef_admin_user: root
+    chef_admin_email: joao.furtado@hpe.com
+    chef_admin_password: qaz123WSX
+    chef_admin_org_short: admin
+    chef_admin_org: admin
+  tags:
+    - chef
+  tasks:
+    - name: Test connection the Chef machine
+      ping:
+
+    - name: Download Chef binaries and check their checksum
+      get_url:
+        url: https://packages.chef.io/files/stable/chef-server/12.17.5/ubuntu/16.04/chef-server-core_12.17.5-1_amd64.deb
+        dest: /home/{{ management_admin_user }}/
+        checksum: sha256:a82ecaf04add5a08735909f61ada16088731f0cae5599e46558a75dc5c8239eb
+
+    - name: Install Chef binaries
+      apt:
+        deb: "/home/{{ management_admin_user }}/chef-server-core_12.17.5-1_amd64.deb"
+        state: present
+      become: yes
+
+    - name: Reconfigure Chef server configs
+      shell: chef-server-ctl reconfigure
+      become: yes
+
+    - name: Create admin user
+      shell: chef-server-ctl user-create "{{ chef_admin_user }}" "{{ chef_admin_user }}" "{{ chef_admin_user }}" "{{ chef_admin_email }}" "{{ chef_admin_password }}" -f admin.pem
+      args:
+        chdir: /home/{{ management_admin_user }}/
+      become: yes
+      ignore_errors: True
+
+    - name: Create admin org
+      shell: chef-server-ctl org-create "{{ chef_admin_org_short }}" "{{ chef_admin_org }}" --association_user "{{ chef_admin_user }}" -f org.pem
+      args:
+        chdir: /home/{{ management_admin_user }}/
+      become: yes
+      ignore_errors: True
+
+    - name: Install Chef management console
+      shell: chef-server-ctl install chef-manage
+      become: yes
+
+    - name: Reconfigure Chef server configs (after mgmt console)
+      shell: chef-server-ctl reconfigure
+      become: yes
+
+    - name: Reconfigure Chef management console configs
+      shell: chef-manage-ctl reconfigure --accept-license
+      become: yes
+
+# Kubernetes Installation
+- hosts: k8s
+  vars:
+    ansible_ssh_private_key_file: "~/.ssh/management_keys/{{ management_key_name }}"
+    management_key_name: mgmt-key
+    management_admin_user: contadmin
+  tags:
+    - k8s
+  tasks:
+    - name: Test connection the Kubernetes Master machine
+      ping:
+
+    - name: Install Kubernetes dependencies
+      apt:
+        name: apt-transport-https
+        state: present
+      become: yes
+
+    - name: Install Docker dependencies
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - curl
+        - apt-transport-https
+        - ca-certificates
+      become: yes
+
+    - name: Add the Docker package repository key
+      apt_key:
+        url: "https://download.docker.com/linux/ubuntu/gpg"
+        state: present
+      become: yes
+
+    - name: Get the Release name
+      shell: lsb_release -cs
+      register: stdout
+
+    - name: Print Release name
+      debug:
+        var: stdout
+
+    - name: Add the Docker package repository
+      apt_repository:
+        repo:  "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ stdout.stdout }} stable"
+        state: present
+        update_cache: yes
+      become: yes
+
+    - name: Install Docker
+      apt:
+        name: 'docker-ce=17.03.0~ce-0~ubuntu-xenial'
+        state: present
+      become: yes
+
+    - name: Make sure Docker service is enabled
+      service:
+        name: docker
+        enabled: yes
+      become: yes
+
+    - name: Add Google gpg key
+      apt_key:
+        url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+        state: present
+      become: yes
+
+    - name: Create Kubernetes repo file
+      file:
+        path: /etc/apt/sources.list.d/kubernetes.list
+        state: touch
+        mode: "u=rw,g=r,o=r"
+      become: yes
+
+    - name: Add Kubernetes repo to file
+      lineinfile:
+        path: /etc/apt/sources.list.d/kubernetes.list
+        regexp: '^deb http://apt.kubernetes.io/'
+        line: 'deb http://apt.kubernetes.io/ kubernetes-xenial main'
+      become: yes
+
+    - name: Update repositories cache
+      apt:
+        update_cache: yes
+      become: yes
+
+    - name: Install Kubernetes components
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - kubelet
+        - kubeadm
+        - kubectl
+        - kubernetes-cni
+      become: yes
+
+    - name: Create Kubernetes config folder
+      file:
+        path: ~/.kube
+        state: directory
+        mode: 0755
+
+# Kubernetes Master Configuration
+- hosts: k8sm
+  vars:
+    ansible_ssh_private_key_file: "~/.ssh/management_keys/{{ management_key_name }}"
+    management_key_name: mgmt-key
+    management_admin_user: contadmin
+  tags:
+    - k8sm
+  tasks:
+    # Do a try catch, If it fails run a command to get the token string
+    - name: Initialize Kubernetes Master
+      shell: kubeadm init
+      register: stdout
+      become: yes
+      ignore_errors: True
+
+    - name: Print Kubernetes Master output
+      debug:
+        var: stdout
+
+    - name: Copy Kubernetes config to local folder
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: "/home/{{ management_admin_user }}/.kube/conf"
+        owner: "{{ management_admin_user }}"
+        group: "{{ management_admin_user }}"
+        mode: 0644
+        remote_src: yes
+      become: yes
+
+    - name: Deploy Pod Network
+      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      become: yes
+      environment:
+        KUBECONFIG: "/home/{{ management_admin_user }}/.kube/conf"
+
+    - name: Deploy Pod Network RBAC
+      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/k8s-manifests/kube-flannel-rbac.yml
+      become: yes
+      environment:
+        KUBECONFIG: "/home/{{ management_admin_user }}/.kube/conf"
+
+# Kubernetes Worker Configuration
+- hosts: k8sw
+  vars:
+    ansible_ssh_private_key_file: "~/.ssh/management_keys/{{ management_key_name }}"
+    management_key_name: mgmt-key
+    management_admin_user: contadmin
+  tags:
+    - k8sw
+  tasks:
+    - name: Copy Kube folder from master
+      synchronize:
+        mode: push
+        src: /home/{{ management_admin_user }}/.kube/conf
+        dest: /home/{{ management_admin_user }}/.kube/conf
+        verify_host: no
+      delegate_to: k8sm
+
+    - name: Join the master node to the cluster
+      shell: "kubeadm join --discovery-file /home/{{ management_admin_user }}/.kube/conf"
+      become: yes
+      environment:
+        KUBECONFIG: "/home/{{ management_admin_user }}/.kube/conf"

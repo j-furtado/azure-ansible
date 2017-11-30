@@ -1,0 +1,316 @@
+---
+- hosts: deployer
+  vars:
+    # Tenant variables
+    tenant_resource_grp_name: RG-HPE
+    tenant_resource_grp_location: westeurope
+    # Management variables
+    management_storage_acc_name: cldhpemgmt01
+    management_network_name: MANAGEMENT-NET01
+    management_subnet_name: MANAGEMENT-SUBNET01
+    management_subnet_address: "10.10.0.0/24"
+    management_key_name: mgmt-key
+    management_pub_key: "{{ lookup('file', ~/.ssh/management_keys/{{ management_key_name }}.pub) }}"
+    # Compute variables
+    compute_storage_acc_name: cldhpecomp01
+    compute_network_name: CMP-NET01
+    compute_subnet_name: CMP-SUBNET01
+    compute_subnet_address: "192.168.1.0/24"
+    # Container variables
+    container_storage_acc_name: cldhpecont01
+    container_network_name: CONT-NET01
+    container_subnet_name: CONT-SUBNET01
+    container_subnet_address: "172.150.0.0/16"
+    # GitLab variables
+    gitlab_mgmt_nic_name: NIC-GITLAB-MGMT-01
+    gitlab_mgmt_sec_grp_name: SG-GITLAB-MGMT-01
+    gitlab_pub_ip_name: IP-GITLAB-MGMT
+    gitlab_vm_name: VM-GITLAB-01
+    gitlab_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    # AWX variables
+    awx_mgmt_nic_name: NIC-AWX-MGMT-01
+    awx_mgmt_sec_grp_name: SG-AWX-MGMT-01
+    awx_comp_nic_name: NIC-AWX-COMP-01
+    awx_comp_sec_grp_name: SG-AWX-COMP-01
+    awx_pub_ip_name: IP-AWX-MGMT
+    awx_vm_name: VM-AWX-01
+    awx_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    # Chef variables
+    chef_mgmt_nic_name: NIC-CHEF-MGMT-01
+    chef_mgmt_sec_grp_name: SG-CHEF-MGMT-01
+    chef_comp_nic_name: NIC-CHEF-COMP-01
+    chef_comp_sec_grp_name: SG-CHEF-COMP-01
+    chef_pub_ip_name: IP-CHEF-MGMT
+    chef_vm_name: VM-CHEF-01
+    chef_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    # Kubernetes Master variables
+    k8sm_cont_nic_name: NIC-K8SM-CONT-01
+    k8sm_cont_sec_grp_name: SG-K8SM-CONT-01
+    k8sm_pub_ip_name: IP-K8SM-CONT
+    k8sm_vm_name: VM-K8SM-01
+    k8sm_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+    # Kubernetes Worker variables
+    k8sw_cont_nic_name: NIC-K8SW-CONT-01
+    k8sw_cont_sec_grp_name: SG-K8SW-CONT-01
+    k8sw_pub_ip_name: IP-K8SW1-CONT
+    k8sw_vm_name: VM-K8SW-01
+    k8sw_vm_pub_key: "{{ lookup('file', '~/.ssh/management_keys/' + management_key_name +'.pub') }}"
+  tasks:
+    # Delete GitLab Virtual Machine
+    - name: Delete GitLab VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_vm_name }}"
+        state: absent
+        remove_on_absent: all
+
+    - name: Delete GitLab MGMT NIC
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_mgmt_nic_name }}"
+        state: absent
+
+    - name: Delete GitLab Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_pub_ip_name }}"
+        state: absent
+
+    - name: Delete GitLab Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ gitlab_mgmt_sec_grp_name }}"
+        state: absent
+
+#    - name: Remove GitLab VM to the known_hosts
+#      known_hosts:
+#        name: gitlab.mgmt.local
+#        key: "gitlab.mgmt.local {{ gitlab_vm_pub_key }}"
+#        state: absent
+
+    # Delete AWX Virtual Machine
+    - name: Delete AWX VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_vm_name }}"
+        state: absent
+        remove_on_absent: all
+
+    - name: Delete AWX MGMT NIC
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_mgmt_nic_name }}"
+        state: absent
+
+    - name: Delete AWX Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_pub_ip_name }}"
+        state: absent
+
+    - name: Delete AWX MGMT Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_mgmt_sec_grp_name }}"
+        state: absent
+
+    - name: Delete AWX COMP NIC
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_comp_nic_name }}"
+        state: absent
+
+    - name: Delete AWX COMP Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ awx_comp_sec_grp_name }}"
+        state: absent
+
+#    - name: Remove AWX VM to the known_hosts
+#      known_hosts:
+#        name: awx.mgmt.local
+#        key: "awx.mgmt.local {{ awx_vm_pub_key }}"
+#        state: absent
+
+    # Delete Chef Virtual Machine
+    - name: Delete Chef VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_vm_name }}"
+        state: absent
+        remove_on_absent: all
+
+    - name: Delete Chef MGMT NIC
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_mgmt_nic_name }}"
+        state: absent
+
+    - name: Delete Chef Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_pub_ip_name }}"
+        state: absent
+
+    - name: Delete Chef MGMT Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_mgmt_sec_grp_name }}"
+        state: absent
+
+    - name: Delete Chef COMP NIC
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_comp_nic_name }}"
+        state: absent
+
+    - name: Delete Chef COMP Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ chef_comp_sec_grp_name }}"
+        state: absent
+
+#    - name: Remove Chef VM to the known_hosts
+#      known_hosts:
+#        name: chef.mgmt.local
+#        key: "chef.mgmt.local {{ chef_vm_pub_key }}"
+#        state: absent
+
+    # Delete Kubernetes Master Virtual Machine
+    - name: Delete Kubernetes Master VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_vm_name }}"
+        state: absent
+        remove_on_absent: all
+
+    - name: Delete Kubernetes Master CONTAINER NIC
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_cont_nic_name }}"
+        state: absent
+
+    - name: Delete Kubernetes Master Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_pub_ip_name }}"
+        state: absent
+
+    - name: Delete Kubernetes Master CONTAINER Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sm_cont_sec_grp_name }}"
+        state: absent
+
+    # Delete Kubernetes Worker Virtual Machine
+    - name: Delete Kubernetes Worker VM
+      azure_rm_virtualmachine:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_vm_name }}"
+        state: absent
+        remove_on_absent: all
+
+    - name: Delete Kubernetes Worker CONTAINER NIC
+      azure_rm_networkinterface:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_cont_nic_name }}"
+        state: absent
+
+    - name: Delete Kubernetes Worker Public IP address
+      azure_rm_publicipaddress:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_pub_ip_name }}"
+        state: absent
+
+    - name: Delete Kubernetes Worker CONTAINER Security Group
+      azure_rm_securitygroup:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ k8sw_cont_sec_grp_name }}"
+        state: absent
+
+    # Delete Infraestructure
+    - name: Delete the MANAGEMENT storage account, if exists
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ management_storage_acc_name }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the COMPUTE storage account, if exists
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ compute_storage_acc_name }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the CONTAINER storage account, if exists
+      azure_rm_storageaccount:
+        resource_group: "{{ tenant_resource_grp_name }}"
+        name: "{{ container_storage_acc_name }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the MANAGEMENT subnet, if exists
+      azure_rm_subnet:
+        name: "{{ management_subnet_name }}"
+        virtual_network_name: "{{ management_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ management_subnet_address }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the MANAGEMENT network, if exists
+      azure_rm_virtualnetwork:
+        name: "{{ management_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the COMPUTE subnet, if exists
+      azure_rm_subnet:
+        name: "{{ compute_subnet_name }}"
+        virtual_network_name: "{{ compute_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ compute_subnet_address }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the COMPUTE network, if exists
+      azure_rm_virtualnetwork:
+        name: "{{ compute_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the CONTAINER subnet, if exists
+      azure_rm_subnet:
+        name: "{{ container_subnet_name }}"
+        virtual_network_name: "{{ container_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        address_prefix_cidr: "{{ container_subnet_address }}"
+        state: absent
+      ignore_errors: True
+
+    - name: Delete the CONTAINER network, if exists
+      azure_rm_virtualnetwork:
+        name: "{{ container_network_name }}"
+        resource_group: "{{ tenant_resource_grp_name }}"
+        state: absent
+      ignore_errors: True
+
+#    - name: Remove MANAGEMENT keys to the authorized keys
+#      authorized_key:
+#        user: "{{ management_admin_user }}"
+#        state: absent
+#        key: "{{ management_pub_key }}"
+
+    - name: Clean MANAGEMENT private keys
+      file:
+        state: absent
+        path: ~/.ssh/management_keys/
+
+    - name: Delete the tenant resource group
+      azure_rm_resourcegroup:
+        name: "{{ tenant_resource_grp_name }}"
+        location: "{{ tenant_resource_grp_location }}"
+        state: absent

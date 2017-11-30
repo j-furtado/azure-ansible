@@ -1,0 +1,21 @@
+[deployer]
+deployer.mgmt.local ansible_connection=local ansible_user=ubuntu
+
+[gitlab]
+gitlab.mgmt.local ansible_connection=ssh ansible_user=mgmtadmin
+
+[awx]
+awx.mgmt.local ansible_connection=ssh ansible_user=mgmtadmin
+
+[chef]
+chef.mgmt.local ansible_connection=ssh ansible_user=mgmtadmin
+
+[k8s:children]
+k8sm
+k8sw
+
+[k8sm]
+k8sm.container.local ansible_connection=ssh ansible_user=contadmin
+
+[k8sw]
+k8sw1.container.local ansible_connection=ssh ansible_user=contadmin
